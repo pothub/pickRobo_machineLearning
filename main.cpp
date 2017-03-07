@@ -3,72 +3,112 @@
 
 using namespace std;
 
-string src_directory_path = "17-02-27_17:16:28/";
-string src_image_path = src_directory_path + "Labeling.bmp";
-string raw_image_path = src_directory_path + "Image23.bmp";
-string xml_path = src_directory_path + "output.xml";
+#define workMaxNum 4
+#define extractRange 150
 
-int work1_x = 524,work1_y = 278;
-int work2_x = 722,work2_y = 376;
-int work3_x = 234,work3_y = 742;
-int extract_range = 150;
+class CWork{
+	private:
+		string findWord;
+		string firstWord;	//"<" + findWord + ">";
+		string lastWord;	//"</" + findWord + ">";
+	public:
+		string logDir = "17-02-27_17:16:28/";
+		string labelImagePath = logDir + "Labeling.bmp";
+		string Image23Path = logDir + "Image23.bmp";
+		string xmlPath = logDir + "output.xml";
+		int workX[workMaxNum];	//work position x [pixel]
+		int workY[workMaxNum];	//work position y [pixel]
+		int workDeg[workMaxNum];	//work deg
+		int workNum;
+		void updateFindWord(string updateWord);
+		void findLocation();
+};
 
-int main(int argc, const char* argv[]){
-	std::ifstream ifs(xml_path);
+void CWork::updateFindWord(string updateWord){
+	findWord = updateWord;
+	firstWord = "<" + findWord + ">";
+	lastWord = "</" + findWord + ">";
+}
+void CWork::findLocation(){
+	std::ifstream ifs(xmlPath);
 	std::string str;
 	if (ifs.fail()){
 		std::cerr << "failed" << std::endl;
-		return -1;
+		return;
 	}
-	while (getline(ifs, str)){
-		string ex_word = "pix_X";
-		string index_word = "<" + ex_word + ">";
-		string last_word = "</" + ex_word + ">";
-		string::size_type index_num = str.find(index_word);
-		string::size_type last_num = str.find(last_word);
-		if( index_num != string::npos ){
-			cout << str.substr(index_num + index_word.length(),last_num-index_num-last_word.length()+1) << endl;
+	workNum=0;
+	updateFindWord("pix_X");
+	string::size_type firstWordPos;
+	string::size_type lastWordPos;
+	int findWordFlag=0;
+	while(getline(ifs, str)){	// read every line
+		firstWordPos = str.find(firstWord);
+		if(firstWordPos != string::npos && findWordFlag==0){	// if find "pix_X"
+			lastWordPos = str.find(lastWord);
+			workX[workNum] = stoi(str.substr(firstWordPos + firstWord.length(),lastWordPos-firstWordPos-lastWord.length()+1));
+			findWordFlag=1;
+			updateFindWord("pix_Y");
+		}
+		else if(firstWordPos != string::npos && findWordFlag==1){	// if find "pix_Y"
+			lastWordPos = str.find(lastWord);
+			workY[workNum] = stoi(str.substr(firstWordPos + firstWord.length(),lastWordPos-firstWordPos-lastWord.length()+1));
+			findWordFlag=2;
+			updateFindWord("deg_C");
+		}
+		else if(firstWordPos != string::npos && findWordFlag==2){	// if find "deg_C"
+			lastWordPos = str.find(lastWord);
+			workDeg[workNum] = stoi(str.substr(firstWordPos + firstWord.length(),lastWordPos-firstWordPos-lastWord.length()+1));
+			workNum++;
+			findWordFlag=0;
+			updateFindWord("pix_X");
 		}
 	}
-	return 0;
+	for(int i=0;i<workMaxNum;i++){
+		cout<<workX[i]<<","<<workY[i]<<","<<workDeg[i]<<endl;
+	}
+}
 
-	cv::Mat src_img = cv::imread(src_image_path);
-	cv::Mat raw_img = cv::imread(raw_image_path);
-	// if(src_img.empty()){
-	//   std::cerr << "Failed to open image file." << std::endl;
-	//   return -1; 
-	// }
-	cv::Mat gray_img,mask_img;
+
+int main(int argc, const char* argv[]){
+	CWork work;
+	work.findLocation();
+
+	cv::Mat labelImage = cv::imread(work.labelImagePath);
+	cv::Mat Image23 = cv::imread(work.Image23Path);
+	if(labelImage.empty()){
+	  cout << "Failed to open image file." << endl;
+	  return -1; 
+	}
 	// cv::cvtColor(src_img,gray_img,CV_RGB2GRAY);
 
-	cv::Mat pointed_img = src_img.clone();
-	circle(pointed_img, cv::Point(work1_x, work1_y), 20, cv::Scalar(200, 200, 200), 2, 2);
-	circle(pointed_img, cv::Point(work2_x, work2_y), 20, cv::Scalar(200, 200, 200), 2, 2);
-	circle(pointed_img, cv::Point(work3_x, work3_y), 20, cv::Scalar(200, 200, 200), 2, 2);
+	cv::Mat pointImage = labelImage.clone();
+	for(int i=0;i<work.workNum;i++){	// pointImage = work centor coordinates circled image
+		circle(pointImage, cv::Point(work.workX[i], work.workY[i]), 20, cv::Scalar(200, 200, 200), 2, 2);
+	}
 
-	cv::Mat hsv_img;
-	cv::cvtColor(src_img,hsv_img,CV_BGR2HSV);				//BGR to HSV
-	int hue = hsv_img.at<cv::Vec3b>(work1_y, work1_x)[0];
-	int sat = hsv_img.at<cv::Vec3b>(work1_y, work1_x)[1];
-	int val = hsv_img.at<cv::Vec3b>(work1_y, work1_x)[2];
-	// cout<<hue<<sat<<val<<endl;
-	// make mask_img with a specific HSV
-	cv::inRange(hsv_img, cv::Scalar(hue,sat,val,0), cv::Scalar(hue,sat,val,0), mask_img);
+	cv::Mat hsvImage,maskImage;
+	cv::cvtColor(labelImage,hsvImage,CV_BGR2HSV);				//BGR to HSV
 
-	cv::Mat extract_img;
-	raw_img.copyTo(extract_img,mask_img);	//extract_img = raw_img+mask_img
-	cv::Mat cut_img(extract_img,cv::Rect(work1_x-extract_range,work1_y-extract_range,
-				extract_range*2,extract_range*2));
+	for(int i=0;i<work.workNum;i++){
+		int hue = hsvImage.at<cv::Vec3b>(work.workY[i], work.workX[i])[0];
+		int sat = hsvImage.at<cv::Vec3b>(work.workY[i], work.workX[i])[1];
+		int val = hsvImage.at<cv::Vec3b>(work.workY[i], work.workX[i])[2];
+		// cout<<hue<<sat<<val<<endl;
 
-	// cv::imshow("src", src_img);
-	// cv::imshow("gray", mask_img);
-	// cv::imshow("ex", extract_img);
-	// cv::imshow("cut", cut_img);
-	cv::imwrite("pointed.bmp",pointed_img);
-	// cv::imwrite("c.bmp",extract_img);
-	cv::imwrite("1.bmp",cut_img);
-	cv::waitKey(0);
-	cv::destroyAllWindows();
+		// maskImage = extracted with specific hsv values image
+		cv::inRange(hsvImage, cv::Scalar(hue,sat,val,0), cv::Scalar(hue,sat,val,0), maskImage);
+
+		cv::Mat extractImage;
+		Image23.copyTo(extractImage,maskImage);	//extractImage = Image23 + maskImage
+		// cutImage = extractImage cut out in extractRange square
+		cv::Mat cutImage(extractImage,cv::Rect(work.workX[i]-extractRange,work.workY[i]-extractRange,extractRange*2,extractRange*2));
+		cv::imwrite(work.logDir + to_string(i) + ".bmp",cutImage);	//save cutImage
+	}
+
+	// cv::imshow("point", pointImage);
+	// cv::imshow("gray", maskImage);
+	// cv::waitKey(0);
+	// cv::destroyAllWindows();
 
 	return 0;
 }
