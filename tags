@@ -1,0 +1,23 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.9~svn20110310	//
+CWork	main.cpp	/^class CWork{$/;"	c	file:
+Image23Path	main.cpp	/^		string Image23Path = logDir + "Image23.bmp";$/;"	m	class:CWork	file:
+extractRange	main.cpp	7;"	d	file:
+findLocation	main.cpp	/^void CWork::findLocation(){$/;"	f	class:CWork
+findWord	main.cpp	/^		string findWord;$/;"	m	class:CWork	file:
+firstWord	main.cpp	/^		string firstWord;	\/\/"<" + findWord + ">";$/;"	m	class:CWork	file:
+labelImagePath	main.cpp	/^		string labelImagePath = logDir + "Labeling.bmp";$/;"	m	class:CWork	file:
+lastWord	main.cpp	/^		string lastWord;	\/\/"<\/" + findWord + ">";$/;"	m	class:CWork	file:
+logDir	main.cpp	/^		string logDir = "17-02-27_17:16:28\/";$/;"	m	class:CWork	file:
+main	main.cpp	/^int main(int argc, const char* argv[]){$/;"	f
+updateFindWord	main.cpp	/^void CWork::updateFindWord(string updateWord){$/;"	f	class:CWork
+workDeg	main.cpp	/^		int workDeg[workMaxNum];	\/\/work deg$/;"	m	class:CWork	file:
+workMaxNum	main.cpp	6;"	d	file:
+workNum	main.cpp	/^		int workNum;$/;"	m	class:CWork	file:
+workX	main.cpp	/^		int workX[workMaxNum];	\/\/work position x [pixel]$/;"	m	class:CWork	file:
+workY	main.cpp	/^		int workY[workMaxNum];	\/\/work position y [pixel]$/;"	m	class:CWork	file:
+xmlPath	main.cpp	/^		string xmlPath = logDir + "output.xml";$/;"	m	class:CWork	file:
